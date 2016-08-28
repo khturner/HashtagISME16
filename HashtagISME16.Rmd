@@ -1,7 +1,7 @@
 ---
 title: "HashtagISME16"
 author: "Keith H. Turner (keith.turner@monsanto.com, http://twitter.com/kay_aych)"
-date: "8/26/2016"
+date: "8/27/2016"
 output: html_document
 runtime: shiny
 ---
@@ -17,7 +17,7 @@ ISME16 in Montreal was a blast. There were so many great talks and posters, and 
 
 ### Downloading tweets
 
-Over XXXX tweets were posted with the #ISME16 hashtag, which should be a large enough dataset to do some fun stuff with. First though, let's download them.
+Over 6,800 tweets were posted with the #ISME16 hashtag, which should be a large enough dataset to do some fun stuff with. First though, let's download them.
 
 ```{r, eval=F}
 library(dplyr)
@@ -98,7 +98,8 @@ but people were too busy partying on **Tuesday** evening:
 
 and flying out on **Friday** evening:
 
-XXXXXX
+<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr"><a href="https://twitter.com/hashtag/ISME16?src=hash">#ISME16</a> was great! Made new friends and (hopefully) kept the old :) Thanks for the good times everyone, safe travels!</p>&mdash; Daan Speth (@daanspeth) <a href="https://twitter.com/daanspeth/status/769360501994291201">August 27, 2016</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 to tweet much. Another thing I noticed was that **at night**, while most of us conferencegoers were resting up for the next day of science, the ratio of retweets to tweets went way up.
 
@@ -142,7 +143,7 @@ tweeter_summary <- original_tweets_week_of %>%
 renderDataTable(tweeter_summary)
 ```
 
-So it looks like about XXX people were active on Twitter during ISME16, which is pretty good! I'd be interested to see how that compares to ISME15, and what it'll be at ISME17. As for activity, man, I thought I tweeted a lot this week, but [Siouxsie Wiles](https://twitter.com/SiouxsieW) has all of us beat by far. What's the distribution of activity look like among the top 30 active tweeters at #ISME16 this week?
+So it looks like ~350 people were active on Twitter during ISME16, which is a pretty good ratio! I'd be interested to see how that compares to ISME15, and what it'll be at ISME17. As for activity, man, I thought I tweeted a lot this week, but [Siouxsie Wiles](https://twitter.com/SiouxsieW) has all of us beat by far. What's the distribution of activity look like among the top 30 active tweeters at #ISME16 this week?
 
 ```{r}
 tweeter_summary %>% slice(1:30) %>%
@@ -174,16 +175,18 @@ I think this is starting to show some interesting divisions in Twitter patterns.
 One of my favorite things about using Twitter at conferences though is its use as a forum for real-time conversation between participants. It has great potential to span different sessions, times, and physical boundaries. With ~2,000 attendees, you can't possibly always meet up with the right group to discuss something you're interested in. Who were some of the most active tweeters in conversations? We'll begin looking into this by compiling a record of mentions by parsing the `text` field.
 
 ```{r}
-# Note: this approach does not capture conversations in the form of "quoted" retweets, as they appear as hyperlinks in the text field
+# Note: this approach does not capture conversations in the form of "quoted" retweets, as they appear as hyperlinks in the text field. This also does not count retweets as mentions;.
+# Make a list of mentionees, index by mentioner
 mentions <- regmatches(original_tweets_week_of$text,
-                       gregexpr("@[-_A-Za-z0-9]+", original_tweets_week_of$text))
+                       gregexpr("@[-_A-Za-z0-9]+",
+                                original_tweets_week_of$text))
+mentions <- lapply(mentions, function(x) gsub("@", "", x)) # Strip off @
 names(mentions) <- original_tweets_week_of$screenName
-
 # Filter out non-mentioning tweets
 mentions <- mentions[lapply(mentions, length) > 0]
 
 # Who were the 30 most mentioned tweeters?
-data.frame(screenName = gsub("@", "", unlist(mentions)) )%>% tbl_df %>% 
+data.frame(screenName = unlist(mentions)) %>% tbl_df %>% 
  group_by(screenName) %>%
  tally %>% arrange(-n) %>% slice(1:30) %>%
   transform(screenName = reorder(screenName, -n)) %>%
@@ -197,65 +200,55 @@ This list shouldn't be too surprising to anybody who was at ISME16, these were t
 <blockquote class="twitter-tweet" data-conversation="none" data-lang="en"><p lang="en" dir="ltr"><a href="https://twitter.com/m3thyl">@m3thyl</a> <a href="https://twitter.com/hashtag/ISME16?src=hash">#ISME16</a> K. Wrighton is a serious contender in the awesome sampling system category with a fistulated moose!! <a href="https://t.co/lRDcIGjPGU">pic.twitter.com/lRDcIGjPGU</a></p>&mdash; Adrien Assié (@m3thyl) <a href="https://twitter.com/m3thyl/status/768874608715964416">August 25, 2016</a></blockquote>
 <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<iframe src="//giphy.com/embed/XWgrg7WHmZ7jO" width="480" height="377" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="http://giphy.com/gifs/drinking-deer-XWgrg7WHmZ7jO">via GIPHY</a></p>
-#### wut?
-
-Also, her talk about it was awesome, showing that we have a huge gap in biochemical and microbiological knowledge when it comes to the basics of ruminant digestion.
+<iframe src="//giphy.com/embed/XWgrg7WHmZ7jO" width="480" height="377" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="http://giphy.com/gifs/drinking-deer-XWgrg7WHmZ7jO">v...wait what?/a></p>
+#Also, her talk about it was awesome, showing that we have a huge gap in biochemical and microbiological knowledge when it comes to the basics of ruminant digestion.
 
 ### Twitter as a social network
 
-Graph analysis yada yada yada
+The unique thing about Twitter mentions as opposed to other social network tags (e.g. Facebook) is that they can mark a back-and-forth conversation. Now that we've extracted mentions from our #ISME16 tweets, we can explore the dynamics of these conversations. We'll do so with a graph, where users are nodes and mentions are edges between those nodes
 
+```{r}
 
+# Extract mentions as a vector of "from", "to", "from", "to"...
+edge_sequence <- lapply(seq_along(mentions), function(i) {
+  as.vector(rbind(rep(names(mentions)[[i]], length(mentions[[i]])),
+                  mentions[[i]]))
+  }) %>% unlist
 
+# Summarize from, to and number of mentions in a df
+edges <- data.frame(from = edge_sequence[seq(1, length(edge_sequence), 2)],
+                    to = edge_sequence[seq(2, length(edge_sequence), 2)],
+                    stringsAsFactors = F) %>% tbl_df %>%
+  group_by(from, to) %>% summarize(value = n())
 
+# Build a df for nodes
+nodes <- data.frame(id = unique(c(edges$from, edges$to)),
+                    label = unique(c(edges$from, edges$to)),
+                    stringsAsFactors = F) %>% tbl_df
 
+# Construct an igraph object of our mention graph
+library(igraph)
+mention_graph <- make_empty_graph() + vertices(nodes$id) +
+  edges(as.vector(rbind(edges$from, edges$to)), value = edges$value)
 
+# Calculate centrality of our nodes with PageRank (scaled a bit)
+V(mention_graph)$value <- page_rank(mention_graph, weights = E(mention_graph)$value)[[1]] - 0.0013 
 
-his R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately. 
+# Did a user use the #ISME16 hashtag?
+V(mention_graph)$group <- ifelse(V(mention_graph)$name %in% tweeter_summary$screenName, "HashtagUser", "NonHashtagUser")
 
-To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authoring_shiny.html).
+# Visualize it! In this visualization, blue nodes are people who used the #ISME16 hashtag, and yellow are those who didn't. An arrow is drawn from one node to another if the first node mentions the second in a tweet with the #ISME16 hashtag. Nodes are sized by PageRank.
+library(visNetwork)
+mention_graph_vn <- toVisNetworkData(mention_graph)
+visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges) %>%
+  visIgraphLayout(physics = T, smooth = T) %>%
+  visEdges(arrows = "to") %>%
+  visOptions(highlightNearest = TRUE)
 
-## Inputs and Outputs
-
-You can embed Shiny inputs and outputs in your document. Outputs are automatically updated whenever inputs change.  This demonstrates how a standard R plot can be made interactive by wrapping it in the Shiny `renderPlot` function. The `selectInput` and `sliderInput` functions create the input widgets used to drive the plot.
-
-```{r eruptions, echo=FALSE}
-inputPanel(
-  selectInput("n_breaks", label = "Number of bins:",
-              choices = c(10, 20, 35, 50), selected = 20),
-  
-  sliderInput("bw_adjust", label = "Bandwidth adjustment:",
-              min = 0.2, max = 2, value = 1, step = 0.2)
-)
-
-renderPlot({
-  hist(faithful$eruptions, probability = TRUE, breaks = as.numeric(input$n_breaks),
-       xlab = "Duration (minutes)", main = "Geyser eruption duration")
-  
-  dens <- density(faithful$eruptions, adjust = input$bw_adjust)
-  lines(dens, col = "blue")
-})
 ```
 
-## Embedded Application
+So there's clearly a lot to chew on here, but I think there's some pretty neat stuff going on. For example, you can definitely see again that the plenary speakers (Rich Lenski, Penny Chisolm, etc.), are huge central points in the discussion. But you can also identify some people who are highly interconnected in the ISME16 sub-Twittersphere. Also interesting are those people around the edges who used the #ISME16 hashtag (and thus are blue), who "spread the gospel" of the conference to others who didn't use the hashtag (and thus are yellow).
 
-It's also possible to embed an entire Shiny application within an R Markdown document using the `shinyAppDir` function. This example embeds a Shiny application located in another directory:
+### Wrapup
 
-```{r tabsets, echo=FALSE}
-shinyAppDir(
-  system.file("examples/06_tabsets", package = "shiny"),
-  options = list(
-    width = "100%", height = 550
-  )
-)
-```
-
-Note the use of the `height` parameter to determine how much vertical space the embedded application should occupy.
-
-You can also use the `shinyApp` function to define an application inline rather then in an external directory.
-
-In all of R code chunks above the `echo = FALSE` attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.
-
-
-
+This is about as far as I got before I thought I should post this online somewhere. The code and data are all up on [my GitHub](https://github.com/khturner/HashtagISME16), please feel free to fork it, or drop me a line if you have any comments/questions. Thanks again for a great conference everyone and I hope to see you all in Leipzig for [#ISME17](https://twitter.com/hashtag/ISME17?src=hash)!
