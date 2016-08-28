@@ -175,7 +175,8 @@ I think this is starting to show some interesting divisions in Twitter patterns.
 One of my favorite things about using Twitter at conferences though is its use as a forum for real-time conversation between participants. It has great potential to span different sessions, times, and physical boundaries. With ~2,000 attendees, you can't possibly always meet up with the right group to discuss something you're interested in. Who were some of the most active tweeters in conversations? We'll begin looking into this by compiling a record of mentions by parsing the `text` field.
 
 ```{r}
-# Note: this approach does not capture conversations in the form of "quoted" retweets, as they appear as hyperlinks in the text field. This also does not count retweets as mentions;.
+# Note: this approach does not capture conversations in the form of "quoted" retweets, as they appear as hyperlinks in the text field. This also does not count retweets as mentions.
+
 # Make a list of mentionees, index by mentioner
 mentions <- regmatches(original_tweets_week_of$text,
                        gregexpr("@[-_A-Za-z0-9]+",
@@ -200,8 +201,9 @@ This list shouldn't be too surprising to anybody who was at ISME16, these were t
 <blockquote class="twitter-tweet" data-conversation="none" data-lang="en"><p lang="en" dir="ltr"><a href="https://twitter.com/m3thyl">@m3thyl</a> <a href="https://twitter.com/hashtag/ISME16?src=hash">#ISME16</a> K. Wrighton is a serious contender in the awesome sampling system category with a fistulated moose!! <a href="https://t.co/lRDcIGjPGU">pic.twitter.com/lRDcIGjPGU</a></p>&mdash; Adrien Assié (@m3thyl) <a href="https://twitter.com/m3thyl/status/768874608715964416">August 25, 2016</a></blockquote>
 <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<iframe src="//giphy.com/embed/XWgrg7WHmZ7jO" width="480" height="377" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="http://giphy.com/gifs/drinking-deer-XWgrg7WHmZ7jO">v...wait what?/a></p>
-#Also, her talk about it was awesome, showing that we have a huge gap in biochemical and microbiological knowledge when it comes to the basics of ruminant digestion.
+<iframe src="//giphy.com/embed/XWgrg7WHmZ7jO" width="480" height="377" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="http://giphy.com/gifs/drinking-deer-XWgrg7WHmZ7jO">...wait what?</a></p>
+
+Also, her talk about it was awesome, showing that we have a huge gap in biochemical and microbiological knowledge when it comes to the basics of ruminant digestion.
 
 ### Twitter as a social network
 
