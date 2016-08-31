@@ -10,7 +10,7 @@ runtime: shiny
 knitr::opts_chunk$set(echo = TRUE, warning = F, error = F, message = F)
 ```
 
-*__Update 8/28/2016:__ Added in some graph clustering analysis (at the bottom). More importantly, properly captioned the moose gif.*
+*__Update 8/31/2016:__ Added in some graph clustering analysis (at the bottom). More importantly, properly captioned the moose gif.*
 
 *The code and data for this post are up on [my GitHub](https://github.com/khturner/HashtagISME16), please feel free to fork it, or drop me a line if you have any comments/questions.*
 
@@ -53,8 +53,7 @@ In this document, I'm not running the above code to avoid hitting the Twitter AP
 isme16_tweets <- readRDS("isme16_tweets.rds")
 
 # Let's take a look
-library(DT)
-renderDataTable(isme16_tweets)
+isme16_tweets
 
 ```
 
