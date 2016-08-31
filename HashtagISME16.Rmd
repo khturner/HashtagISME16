@@ -10,6 +10,10 @@ runtime: shiny
 knitr::opts_chunk$set(echo = TRUE, warning = F, error = F, message = F)
 ```
 
+*__Update 8/28/2016:__ Added in some graph clustering analysis (at the bottom). More importantly, properly captioned the moose gif.*
+
+*The code and data for this post are up on [my GitHub](https://github.com/khturner/HashtagISME16), please feel free to fork it, or drop me a line if you have any comments/questions.*
+
 ISME16 in Montreal was a blast. There were so many great talks and posters, and lots of cool, friendly people. As with many academic conferences these days, we were very active on Twitter too, with the hashtag [#ISME16](https://twitter.com/hashtag/ISME16?src=hash). We basically took Montreal Twitter over at the start of the conference:
 
 <blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr"><a href="https://twitter.com/hashtag/ISME16?src=hash">#ISME16</a> is trending topic in <a href="https://twitter.com/Montreal">@Montreal</a> 😀</p>&mdash; The ISME Office (@ISME_OFFICE) <a href="https://twitter.com/ISME_OFFICE/status/767468449769676800">August 21, 2016</a></blockquote>
@@ -41,8 +45,6 @@ saveRDS(isme16_tweets, "isme16_tweets.rds")
 
 ```{r, echo=F, warning=F, error=F}
 library(dplyr)
-library(jsonlite)
-library(twitteR)
 ```
 
 In this document, I'm not running the above code to avoid hitting the Twitter API every time it loads, so let's load the saved results and take a look at them.
@@ -201,7 +203,7 @@ This list shouldn't be too surprising to anybody who was at ISME16, these were t
 <blockquote class="twitter-tweet" data-conversation="none" data-lang="en"><p lang="en" dir="ltr"><a href="https://twitter.com/m3thyl">@m3thyl</a> <a href="https://twitter.com/hashtag/ISME16?src=hash">#ISME16</a> K. Wrighton is a serious contender in the awesome sampling system category with a fistulated moose!! <a href="https://t.co/lRDcIGjPGU">pic.twitter.com/lRDcIGjPGU</a></p>&mdash; Adrien Assié (@m3thyl) <a href="https://twitter.com/m3thyl/status/768874608715964416">August 25, 2016</a></blockquote>
 <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<iframe src="//giphy.com/embed/XWgrg7WHmZ7jO" width="480" height="377" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="http://giphy.com/gifs/drinking-deer-XWgrg7WHmZ7jO">...wait what?</a></p>
+<iframe src="//giphy.com/embed/26ufagX7zCaxYtoCQ" width="480" height="377" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/26ufagX7zCaxYtoCQ">via GIPHY</a></p>
 
 Also, her talk about it was awesome, showing that we have a huge gap in biochemical and microbiological knowledge when it comes to the basics of ruminant digestion.
 
@@ -252,6 +254,30 @@ visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
 
 So there's clearly a lot to chew on here, but I think there's some pretty neat stuff going on. For example, you can definitely see again that the plenary speakers (Rich Lenski, Penny Chisolm, etc.), are huge central points in the discussion. But you can also identify some people who are highly interconnected in the ISME16 sub-Twittersphere. Also interesting are those people around the edges who used the #ISME16 hashtag (and thus are blue), who "spread the gospel" of the conference to others who didn't use the hashtag (and thus are yellow).
 
+### Clustering, cliques, and expanding your network at conferences
+
+While browsing around in that mention graph, I noticed a few interconnected cliques buried in the whole #ISME16 hairball that got me thinking. Conferences are a great place to catch up with old friends and make new ones - how does that play out on our Twitter mention graph? I decided to apply graph clustering analysis to start to try and get an angle on this with visualization.
+
+```{r}
+cw <- cluster_walktrap(mention_graph)
+cw
+```
+
+I tried a few different clustering algorithms built into `igraph`, some were painfully slow, and some did a terrible job resolving modularity, but a weighted [random walk approach](http://arxiv.org/abs/physics/0512106) was super fast and turned out to do a great job with the default parameters. So our #ISME16 mention graph breaks out into 104 groups - what does that look like?
+
+```{r}
+V(mention_graph)$group <- membership(cw)
+# Visualization is the same as before, except 
+mention_graph_vn <- toVisNetworkData(mention_graph)
+visNetwork(nodes = mention_graph_vn$nodes, edges = mention_graph_vn$edges,
+           width = "100%", height = "800px") %>%
+  visIgraphLayout(physics = T, smooth = T) %>%
+  visEdges(arrows = "to") %>%
+  visOptions(highlightNearest = TRUE)
+```
+
+Aside from being super pretty, I think this visualization is really neat and helps highlight the substructure in this highly interconnected graph. Many of those highly connected speakers form a big clique in the center of the graph and provide a lot of interconnectivity. But walk out from that and you can see some cool trends too. For example, labs and colleagues tend to form their own cliques (check out Kelly Wrighton's lab and other associated Ohio State people in particular). And there are people at the edges of those cliques that make the bridge to other groups and other cliques, really embracing the networking aspect of conferences (at least on Twitter!) Take a look and see where you landed. Does it feel about right? Does seeing the interactions this way change the way you think about using Twitter at conferences? Let me know!
+
 ### Wrapup
 
-This is about as far as I got before I thought I should post this online somewhere. The code and data are all up on [my GitHub](https://github.com/khturner/HashtagISME16), please feel free to fork it, or drop me a line if you have any comments/questions. Thanks again for a great conference everyone and I hope to see you all in Leipzig for [#ISME17](https://twitter.com/hashtag/ISME17?src=hash)!
+This is about as far as I got before I thought I should post this online somewhere. Thanks again for a great conference everyone and I hope to see you all in Leipzig for [#ISME17](https://twitter.com/hashtag/ISME17?src=hash)!
